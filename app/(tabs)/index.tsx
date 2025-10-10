@@ -25,6 +25,7 @@ export default function Index() {
       <Image 
         source={images.bg}
         className="absolute z-0 w-full"
+        resizeMode="cover"
       />
       <ScrollView
         className="flex-1 px-5"
@@ -46,7 +47,7 @@ export default function Index() {
           />
         ) : moviesError ? (
           <Text
-          
+            className='px-5 my-3 text-red-500'
           >
             Error: {moviesError?.message}
           </Text>

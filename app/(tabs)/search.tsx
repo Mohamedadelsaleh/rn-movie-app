@@ -1,14 +1,132 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import MovieCard from '@/components/MovieCard'
+import SearchBar from '@/components/SearchBar'
+import { icons } from '@/constants/icons'
+import { images } from '@/constants/images'
+import { fetchMovies } from '@/services/api'
+import useFetch from '@/services/useFetch'
+import React, { useEffect, useState } from 'react'
+import { ActivityIndicator, FlatList, Image, Text, View } from 'react-native'
 
 const Search = () => {
+
+  const [searchQuery, setSearchQuery] = useState("");
+    
+  const { 
+          data: movies, 
+          loading: moviesLoading, 
+          error: moviesError,
+          refetch: loadMovies,
+          reset,
+        } = useFetch(() => fetchMovies({
+          query: searchQuery
+  }), false);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(async () => {
+      if(searchQuery.trim()) {
+        await loadMovies()
+      } else {
+        reset()
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId)
+    
+  }, [searchQuery])
+  
   return (
-    <View>
-      <Text>Search</Text>
-    </View>
+    <View
+      className='flex-1 bg-primary'
+    >
+      <Image 
+        source={images.bg}
+        className='absolute z-0 flex-1 w-full'
+        resizeMode='cover'
+      />
+        <FlatList 
+          data={movies}
+          renderItem={({ item }) => (
+            <MovieCard 
+              {...item}
+            />
+          )}
+          keyExtractor={item => item.id.toString()}
+          numColumns={3}
+          columnWrapperStyle={{
+            justifyContent:"center",
+            gap: 16,
+            marginVertical: 16,
+          }}
+          className="px-5"
+          contentContainerStyle={{
+            paddingBottom: 100
+          }}
+          ListHeaderComponent={
+            <>
+              <View
+                className='flex-row items-center justify-center w-full mt-20'
+              >
+                <Image 
+                  source={icons.logo}
+                  className='w-12 h-10'
+                />
+              </View>
+              <View
+                className='my-5'
+              >
+                <SearchBar 
+                  placeholder='Search movies ...' 
+                  value={searchQuery}
+                  onChangeText={(text: string) => setSearchQuery(text)}
+                />
+              </View>
+
+              {moviesLoading && (
+                <ActivityIndicator 
+                  size="large"
+                  color="#0000ff"
+                  className="my-3"
+                />
+              )}
+              
+              {moviesError && (
+                <Text
+                  className='px-5 my-3 text-red-500'
+                >
+                  Error: {moviesError?.message}
+                </Text>
+              )}
+
+              {!moviesError && !moviesLoading && 
+                searchQuery.trim() && movies?.length > 0 && (
+                  <Text
+                    className='text-xl font-bold text-white'
+                  >
+                    Search Results for{' '}
+                    <Text
+                      className='text-accent'
+                    >
+                      {searchQuery}
+                    </Text>
+                  </Text>
+                )}
+            </>
+          }
+          ListEmptyComponent={
+            !moviesLoading && !moviesError ? (
+              <View
+                className='mt-10 px5 '
+              >
+                <Text
+                  className='text-center text-gray-500'
+                >
+                  {searchQuery?.trim() ? "No Movies Found!" : "Search for a Movie"}
+                </Text>
+              </View>
+          ): null}
+        />
+    </View> 
   )
 }
 
 export default Search
-
-const styles = StyleSheet.create({})
